@@ -9,14 +9,14 @@ def sequencer(values, thrusters, finder='', amplify=False):
 
     for numbers in itertools.permutations(finder):
         sequencing = [int(x) for x in numbers]
-        if amplify:
-            print("Sequence: ({:s})".format(' '.join(map(str, sequencing))))
+        # if amplify:
+        #     print("Sequence: ({:s})".format(' '.join(map(str, sequencing))))
         outs = Computer.amplifier(values, sequencing, thrusters, 0, amplify)
 
         if outs[len(outs)-1] > signal:
             sequence = sequencing
             signal = outs[len(outs)-1]
-            print("New max: ({:s}) -> {:d}".format(' '.join(map(str, sequence)), signal))
+            # print("New max: ({:s}) -> {:d}".format(' '.join(map(str, sequence)), signal))
 
     print("Signals: ", end='')
     print(sequence, end='')
@@ -39,6 +39,8 @@ def second():
     sequencer(inputs, configuration, '56789', True)
 
     values = DataAnalyzer.int_csv("2019day7.txt")[0]
+    print("(7.2)", end='')
+    sequencer(values, configuration, '56789', True)
 
 
 def first():

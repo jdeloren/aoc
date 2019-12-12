@@ -6,58 +6,42 @@ def amplifier(values, phase, thrusters, signal, amplify):
     global INPUT
 
     states = {
-        # VALUES, INDEX, INPUT, FINAL OUTPUT
-        0: [values.copy(), 0, [phase[0]], None],
-        1: [values.copy(), 0, [phase[1]], None],
-        2: [values.copy(), 0, [phase[2]], None],
-        3: [values.copy(), 0, [phase[3]], None],
-        4: [values.copy(), 0, [phase[4]], None]
+        # VALUES, INDEX, INPUT, OUTPUT, COMPLETE
+        0: [values.copy(), 0, [phase[0]], 0, False],
+        1: [values.copy(), 0, [phase[1]], 0, False],
+        2: [values.copy(), 0, [phase[2]], 0, False],
+        3: [values.copy(), 0, [phase[3]], 0, False],
+        4: [values.copy(), 0, [phase[4]], 0, False]
     }
-
-    # WORKING!
-    # thruster = list()
-    # output = None
-    # for num in phase:
-    #     SHADE = [num, output[0] if output is not None else signal]
-    #     PHASE = num
-    #     output = opcodes(values.copy(), -1, -1)
-    #
-    #     if output[0] != OUTPUT:
-    #         print("OUTPUT diff: {:d} vs {:d}".format(output[0], OUTPUT))
-    #
-    #     thruster.append(output[0])
-    #
-    # return thruster
 
     active = None
     complete = 1 if amplify else 0
 
-    # only for part1??
     states[0][2] = [phase[0], signal]
 
     while complete <= len(thrusters):
         active = 0 if active is None else thrusters[active]
         state = states[active]
 
-        if state[3] is None:
+        if not state[4]:
             INPUT = state[2]
-            print("Thruster: {:d}, input: ({:s}), index: {:d}".format(active, ' '.join(map(str, INPUT)), state[1]))
             output, index, done = opcodes(state[0], -1, -1, state[1], amplify)
 
             state[1] = index
 
             if amplify:
                 states[thrusters[active]][2].append(output)
+                state[3] = state[3] if done else output
 
             if done:
-                state[3] = output
+                state[3] = state[3] if amplify else output
+                state[4] = True
                 complete += 1
 
                 if complete <= len(thrusters):
                     states[thrusters[active]][2].append(output)
 
     # better way to write this?
-    print("{:d} {:d} {:d} {:d} {:d}".format(states[0][3], states[1][3], states[2][3], states[3][3], states[4][3]))
     return [states[0][3], states[1][3], states[2][3], states[3][3], states[4][3]]
 
 
@@ -114,13 +98,11 @@ def opcodes(values, noun, verb, i=0, feedback=False):
             global INPUT
             data = int(INPUT.pop(0))
             values[values[i+1]] = data
-            print("Using input: {:d}".format(data))
             increment = 2
         elif opcode == 4:   # print
             output = op1
             increment = 2
             if feedback:
-                # print("Simulated pause on print: {:d}".format(output))
                 return output, i+2, False
         elif opcode == 5:   # jump-if-true
             increment = parameter(values, i+2, mode2) - i if op1 is not 0 else 3
@@ -137,8 +119,5 @@ def opcodes(values, noun, verb, i=0, feedback=False):
             break
 
         i = abs(i + increment)
-
-    # if feedback:
-    #     print("Final output: {:d}".format(output))
 
     return output, i, True
