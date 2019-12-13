@@ -83,11 +83,11 @@ def opcodes(values, noun, verb, i=0, base=0, feedback=False, debug=False):
 
         if opcode > 99:
             instructions = str(opcode)
-            length = len(instructions)
-            opcode = int(instructions[length-2:])
-            mode1 = int(instructions[length-3])
-            mode2 = int(instructions[length-4]) if length >= 4 else mode2
-            mode3 = int(instructions[length-5]) if length >= 5 else mode3
+            z = len(instructions)
+            opcode = int(instructions[z-2:])
+            mode1 = int(instructions[z-3])
+            mode2 = int(instructions[z-4]) if z >= 4 else mode2
+            mode3 = int(instructions[z-5]) if z >= 5 else mode3
 
         if opcode == 99:
             print(f"Order 99: {output}")
