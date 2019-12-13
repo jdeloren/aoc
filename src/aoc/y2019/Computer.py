@@ -1,3 +1,5 @@
+from itertools import repeat
+
 DEFAULT_INCREMENT = 4
 INPUT = -1
 
@@ -6,12 +8,12 @@ def amplifier(values, phase, thrusters, signal, amplify):
     global INPUT
 
     states = {
-        # VALUES, INDEX, INPUT, OUTPUT, COMPLETE
-        0: [values.copy(), 0, [phase[0]], 0, False],
-        1: [values.copy(), 0, [phase[1]], 0, False],
-        2: [values.copy(), 0, [phase[2]], 0, False],
-        3: [values.copy(), 0, [phase[3]], 0, False],
-        4: [values.copy(), 0, [phase[4]], 0, False]
+        # VALUES, INDEX, INPUT, OUTPUT, BASE, COMPLETE
+        0: [values.copy(), 0, [phase[0]], 0, 0, False],
+        1: [values.copy(), 0, [phase[1]], 0, 0, False],
+        2: [values.copy(), 0, [phase[2]], 0, 0, False],
+        3: [values.copy(), 0, [phase[3]], 0, 0, False],
+        4: [values.copy(), 0, [phase[4]], 0, 0, False]
     }
 
     active = None
@@ -23,11 +25,12 @@ def amplifier(values, phase, thrusters, signal, amplify):
         active = 0 if active is None else thrusters[active]
         state = states[active]
 
-        if not state[4]:
+        if not state[5]:
             INPUT = state[2]
-            output, index, done = opcodes(state[0], -1, -1, state[1], amplify)
+            output, index, base, done = opcodes(state[0], -1, -1, state[1], amplify)
 
             state[1] = index
+            state[4] = base
 
             if amplify:
                 states[thrusters[active]][2].append(output)
@@ -35,7 +38,7 @@ def amplifier(values, phase, thrusters, signal, amplify):
 
             if done:
                 state[3] = state[3] if amplify else output
-                state[4] = True
+                state[5] = True
                 complete += 1
 
                 if complete <= len(thrusters):
@@ -49,19 +52,22 @@ def opcoding(values, identifier, debug=True):
     global INPUT
     INPUT = [identifier]
     output = opcodes(values, -1, -1)
-
-    if debug:
-        print(output[0])
-
     return output
 
 
-def parameter(values, index, mode):
-    value = values[index]
-    return values[value] if mode == 0 else value
+def opcodes(values, noun, verb, i=0, base=0, feedback=False, debug=False):
 
+    def parameter(n, mode):
+        # print(f"MODE: {mode}, INDEX: {index}, REF: {param_index(index, mode)}, BASE: {base}")
+        return values[index(n, mode)]
 
-def opcodes(values, noun, verb, i=0, feedback=False):
+    def index(n, mode):
+        return {0: values[n], 1: n, 2: values[n]+base}[mode]
+
+    # EXPERIMENTAL
+    if not feedback:
+        values.extend(repeat(0, 50000000))
+
     if noun > 0:
         values[1] = noun
         values[2] = verb
@@ -73,51 +79,55 @@ def opcodes(values, noun, verb, i=0, feedback=False):
         increment = DEFAULT_INCREMENT
         opcode = values[i]
 
-        mode1 = 0
-        mode2 = 0
+        mode1 = mode2 = mode3 = 0
 
         if opcode > 99:
             instructions = str(opcode)
             length = len(instructions)
             opcode = int(instructions[length-2:])
             mode1 = int(instructions[length-3])
-            mode2 = int(instructions[length-4]) if length == 4 else mode2
+            mode2 = int(instructions[length-4]) if length >= 4 else mode2
+            mode3 = int(instructions[length-5]) if length >= 5 else mode3
 
         if opcode == 99:
+            print(f"Order 99: {output}")
             break
 
-        op1 = parameter(values, i+1, mode1)
+        op1 = parameter(i+1, mode1)
 
         if opcode == 1:     # add
-            op2 = parameter(values, i+2, mode2)
-            values[values[i+3]] = op1 + op2
+            op2 = parameter(i+2, mode2)
+            values[index(i+3, mode3)] = op1 + op2
         elif opcode == 2:   # multiply
-            op2 = parameter(values, i+2, mode2)
-            values[values[i+3]] = op1 * op2
+            op2 = parameter(i+2, mode2)
+            values[index(i+3, mode3)] = op1 * op2
         elif opcode == 3:   # store
             global INPUT
             data = int(INPUT.pop(0))
-            values[values[i+1]] = data
+            values[index(i+3, mode3)] = data
             increment = 2
         elif opcode == 4:   # print
             output = op1
             increment = 2
             if feedback:
-                return output, i+2, False
+                return output, i+2, base, False
         elif opcode == 5:   # jump-if-true
-            increment = parameter(values, i+2, mode2) - i if op1 is not 0 else 3
+            increment = parameter(i+2, mode2) - i if op1 is not 0 else 3
         elif opcode == 6:   # jump-if-false
-            increment = parameter(values, i+2, mode2) - i if op1 is 0 else 3
+            increment = parameter(i+2, mode2) - i if op1 is 0 else 3
         elif opcode == 7:   # less-than
-            op2 = parameter(values, i+2, mode2)
-            values[values[i+3]] = 1 if op1 < op2 else 0
+            op2 = parameter(i+2, mode2)
+            values[index(i+3, mode3)] = 1 if op1 < op2 else 0
         elif opcode == 8:   # equals
-            op2 = parameter(values, i+2, mode2)
-            values[values[i+3]] = 1 if op1 == op2 else 0
+            op2 = parameter(i+2, mode2)
+            values[index(i+3, mode3)] = 1 if op1 == op2 else 0
+        elif opcode == 9:   # relative-base-offset
+            base += op1
+            increment = 2
         else:
             print("BAD OPCODE: {:d}".format(opcode))
             break
 
         i = abs(i + increment)
 
-    return output, i, True
+    return output, i, base, True
