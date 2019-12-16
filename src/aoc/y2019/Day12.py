@@ -66,10 +66,9 @@ def steps(moons, count=10):
         total = total_energy()
         print(f"Total energy in the system: {total}")
     else:
+        cycle = [0, 0, 0]
         count = 1
         step()
-
-        cycle = [0, 0, 0]
 
         def _lcm(a, b):
             return a * b // math.gcd(a, b)
@@ -78,18 +77,12 @@ def steps(moons, count=10):
             count += 1
             step()
 
-            idles = [0, 0, 0]
-            for n in velocity_list:
-                if n[0] == 0:
-                    idles[0] += 1
-                if n[1] == 0:
-                    idles[1] += 1
-                if n[2] == 0:
-                    idles[2] += 1
+            idles = []
+            for i in range(len(velocity_list[0])):
+                idles.append([x[i] for x in velocity_list].count(0))
 
-            cycle[0] = count * 2 if idles[0] == len(velocity_list) and cycle[0] == 0 else cycle[0]
-            cycle[1] = count * 2 if idles[1] == len(velocity_list) and cycle[1] == 0 else cycle[1]
-            cycle[2] = count * 2 if idles[2] == len(velocity_list) and cycle[2] == 0 else cycle[2]
+            for i in range(len(velocity_list[0])):
+                cycle[i] = count * 2 if idles[i] == len(velocity_list) and cycle[i] == 0 else cycle[i]
 
         full_cycle = _lcm(_lcm(cycle[0], cycle[1]), cycle[2])
 
