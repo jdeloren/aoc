@@ -4,43 +4,45 @@ from . import Computer
 
 def play(values, debug=False):
     ball = paddle = None
-    done = False
-    point = base = index = 0
+    point = 0
 
     def inputter():
         return (ball > paddle) - (ball < paddle)
 
     values[0] = 2
-    while not done:
-        a, index, base, done = Computer.opcodes(values, index, base, inputter, True, debug)
-        b, index, base, done = Computer.opcodes(values, index, base, inputter, True, debug)
-        c, index, base, done = Computer.opcodes(values, index, base, inputter, True, debug)
+    computer = Computer.IntCode(values, input_func=inputter, extend=True, interrupt=True)
+    computer.debug(debug)
 
-        if not done:
-            paddle = a[0] if c[0] == 3 else paddle
-            ball = a[0] if c[0] == 4 else ball
-            point = c[0] if (a[0], b[0]) == (-1, 0) else point
+    while not computer.done:
+        computer.start()
+        computer.start()
+        computer.start()
+        blocks = computer.output(3)
+
+        if not computer.done:
+            paddle = blocks[0] if blocks[2] == 3 else paddle
+            ball = blocks[0] if blocks[2] == 4 else ball
+            point = blocks[2] if (blocks[0], blocks[1]) == (-1, 0) else point
 
     return point
 
 
 def second():
     values = DataAnalyzer.int_csv("2019day13.txt")[0]
-    print("(13.2)")
     codes = play(values.copy())
-    print(codes)
+    print(f"(13.2) Final score: {codes}")
 
 
 def first():
     values = DataAnalyzer.int_csv("2019day13.txt")[0]
-    print("(13.1)")
-    codes = Computer.opcoding(values.copy(), None, False)[0]
+    computer = Computer.IntCode(values, extend=True, auto=True)
 
     count = 0
-    for i in range(0, len(codes), 3):
-        count += 1 if codes[i+2] == 2 else 0
+    output = computer.output()
+    for i in range(0, len(output), 3):
+        count += 1 if output[i+2] == 2 else 0
 
-    print(f"Block tile count: {count}")
+    print(f"(13.1) Block tile count: {count}")
 
 
 def solve(puzzle):

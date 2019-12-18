@@ -3,26 +3,50 @@ from . import Computer
 import itertools
 
 
+def amplifier(values, phase, thrusters, signal, amplify):
+    complete = 1
+    active = None
+    inputs = [signal]
+    output = [0 for _ in range(len(phase))]
+
+    computers = [Computer.IntCode(values.copy(), phase[i], interrupt=amplify) for i in range(len(phase))]
+
+    while complete <= len(phase):
+        active = 0 if active is None else thrusters[active]
+        cpu = computers[active]
+        # cpu.debug(True)
+
+        if not cpu.done:
+            if len(inputs) > 0:
+                computers[active].inputs(inputs.pop(0))
+
+            cpu.start()
+            data = cpu.output()
+
+            if len(data) > 0:
+                output[active] = data[0]
+                inputs.append(data[0])
+
+            if cpu.done:
+                complete += 1
+
+    return output
+
+
 def sequencer(values, thrusters, finder='', amplify=False):
     signal = 0
-    sequence = [0, 0, 0, 0, 0]
+    max_sequence = [0, 0, 0, 0, 0]
+    max_signal = 0
 
     for numbers in itertools.permutations(finder):
-        sequencing = [int(x) for x in numbers]
-        # if amplify:
-        #     print("Sequence: ({:s})".format(' '.join(map(str, sequencing))))
-        outs = Computer.amplifier(values, sequencing, thrusters, 0, amplify)
+        sequence = [int(x) for x in numbers]
+        outs = amplifier(values, [[s] for s in sequence], thrusters, signal, amplify)
 
-        if outs[len(outs)-1] > signal:
-            sequence = sequencing
-            signal = outs[len(outs)-1]
-            # print("New max: ({:s}) -> {:d}".format(' '.join(map(str, sequence)), signal))
+        if outs[-1] > max_signal:
+            max_sequence = sequence
+            max_signal = outs[-1]
 
-    print("Signals: ", end='')
-    print(sequence, end='')
-    print(" -> ", end='')
-    print(signal, end='')
-    print("!")
+    print(f"Signals: {max_sequence} -> {max_signal}!")
 
 
 def second():
@@ -36,6 +60,7 @@ def second():
 
     inputs = [3, 26, 1001, 26, -4, 26, 3, 27, 1002, 27, 2, 27, 1, 27, 26, 
               27, 4, 27, 1001, 28, -1, 28, 1005, 28, 6, 99, 0, 0, 5]
+
     sequencer(inputs, configuration, '56789', True)
 
     values = DataAnalyzer.int_csv("2019day7.txt")[0]
