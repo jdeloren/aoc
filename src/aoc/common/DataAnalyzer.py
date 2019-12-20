@@ -1,6 +1,6 @@
 import csv
 
-PATH = "../../resources/"
+PATH = "../resources/"
 
 
 def load(file):
