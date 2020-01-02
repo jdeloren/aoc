@@ -53,9 +53,6 @@ class IntCode:
     def start(self):
         end = len(self.codes)
 
-        # if self.address == 0:
-            # print(f"CPU START: {self._inputs}")
-
         while self.address < end:
             increment = 4
             opcode = self.codes[self.address]
