@@ -1,5 +1,7 @@
+#!/usr/bin/python
+from src.aoc.common import DataAnalyzer
 import numpy as np
-from aoc import DataAnalyzer
+import sys
 
 cursor = [0, 0]
 crossings = list()
@@ -123,3 +125,7 @@ def solve(puzzle):
     else:
         circuitry("3.1", manhattan)
         circuitry("3.2", stepper)
+
+
+if __name__ == '__main__':
+    solve(sys.argv[1])
