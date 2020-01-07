@@ -7,19 +7,18 @@ class IntCode:
         if input_list is None:
             input_list = []
 
-        self.codes = values
-        self._inputs = list() if input_list is None else input_list
-        self._inputter = input_func
-        self.base = 0
-        self.address = 0
-        self._output = []
+        self.codes = values.copy()
         self.interrupt = interrupt
+        self.address = 0
+        self.done = False
         self._debug = False
         self._debug_out = sys.stdout
-        self.done = False
+        self._init(input_list, input_func)
 
         if extend:
             self.codes.extend(repeat(0, 50000000))
+
+        self.backup = self.codes.copy()
 
         if auto:
             self.start()
@@ -43,14 +42,26 @@ class IntCode:
         del self._output[:size]
         return requested
 
-    def parameter(self, n, mode):
-        # print(f"MODE: {mode}, INDEX: {index}, REF: {param_index(index, mode)}, BASE: {base}")
-        return self.codes[self.index(n, mode)]
+    def _init(self, input_list=None, input_func=None):
+        self.base = 0
+        self.address = 0
+        self._inputs = list() if input_list is None else input_list
+        self._inputter = input_func
+        self._output = []
+        self.done = False
 
-    def index(self, n, mode):
-        return {0: self.codes[n], 1: n, 2: self.codes[n] + self.base}[mode]
+    def reset(self, input_list=None, input_func=None):
+        self.codes = self.backup
+        self._init(input_list, input_func)
 
     def start(self):
+        def _parameter(n, mode):
+            # print(f"MODE: {mode}, INDEX: {index}, REF: {param_index(index, mode)}, BASE: {base}")
+            return self.codes[_index(n, mode)]
+
+        def _index(n, mode):
+            return {0: self.codes[n], 1: n, 2: self.codes[n] + self.base}[mode]
+
         end = len(self.codes)
 
         while self.address < end:
@@ -72,20 +83,20 @@ class IntCode:
                 self._print(f"Order 99: {self._output}")
                 break
 
-            op1 = self.parameter(self.address + 1, mode1)
+            op1 = _parameter(self.address + 1, mode1)
 
             if opcode == 1:  # add
-                op2 = self.parameter(self.address + 2, mode2)
-                self.codes[self.index(self.address + 3, mode3)] = op1 + op2
-                self._print(f"OPCODE 1: {op1} {op2} @ {self.index(self.address + 3, mode3)}")
+                op2 = _parameter(self.address + 2, mode2)
+                self.codes[_index(self.address + 3, mode3)] = op1 + op2
+                self._print(f"OPCODE 1: {op1} {op2} @ {_index(self.address + 3, mode3)}")
             elif opcode == 2:  # multiply
-                op2 = self.parameter(self.address + 2, mode2)
-                self.codes[self.index(self.address + 3, mode3)] = op1 * op2
-                self._print(f"OPCODE 2: {op1} {op2} @ {self.index(self.address + 3, mode3)}")
+                op2 = _parameter(self.address + 2, mode2)
+                self.codes[_index(self.address + 3, mode3)] = op1 * op2
+                self._print(f"OPCODE 2: {op1} {op2} @ {_index(self.address + 3, mode3)}")
             elif opcode == 3:  # store
                 data = self._inputter() if self._inputter else int(self._inputs.pop(0))
-                self._print(f"OPCODE 3: {data} -> {self.index(self.address + 1, mode1)}")
-                self.codes[self.index(self.address + 1, mode1)] = data
+                self._print(f"OPCODE 3: {data} -> {_index(self.address + 1, mode1)}")
+                self.codes[_index(self.address + 1, mode1)] = data
                 increment = 2
             elif opcode == 4:  # print
                 self._output.append(op1)
@@ -96,19 +107,19 @@ class IntCode:
                     return self._output
 
             elif opcode == 5:  # jump-if-true
-                increment = self.parameter(self.address + 2, mode2) - self.address if op1 is not 0 else 3
+                increment = _parameter(self.address + 2, mode2) - self.address if op1 is not 0 else 3
                 self._print(f"OPCODE 5: {increment+self.address}")
             elif opcode == 6:  # jump-if-false
-                increment = self.parameter(self.address + 2, mode2) - self.address if op1 is 0 else 3
+                increment = _parameter(self.address + 2, mode2) - self.address if op1 is 0 else 3
                 self._print(f"OPCODE 6: {increment+self.address}")
             elif opcode == 7:  # less-than
-                op2 = self.parameter(self.address + 2, mode2)
-                self.codes[self.index(self.address + 3, mode3)] = 1 if op1 < op2 else 0
-                self._print(f"OPCODE 7: {op1} {op2} @ {self.index(self.address + 3, mode3)}")
+                op2 = _parameter(self.address + 2, mode2)
+                self.codes[_index(self.address + 3, mode3)] = 1 if op1 < op2 else 0
+                self._print(f"OPCODE 7: {op1} {op2} @ {_index(self.address + 3, mode3)}")
             elif opcode == 8:  # equals
-                op2 = self.parameter(self.address + 2, mode2)
-                self.codes[self.index(self.address + 3, mode3)] = 1 if op1 == op2 else 0
-                self._print(f"OPCODE 8: {op1} {op2} @ {self.index(self.address + 3, mode3)}")
+                op2 = _parameter(self.address + 2, mode2)
+                self.codes[_index(self.address + 3, mode3)] = 1 if op1 == op2 else 0
+                self._print(f"OPCODE 8: {op1} {op2} @ {_index(self.address + 3, mode3)}")
             elif opcode == 9:  # relative-base-offset
                 self.base += op1
                 increment = 2
