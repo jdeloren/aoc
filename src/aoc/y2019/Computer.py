@@ -3,7 +3,7 @@ import sys
 
 
 class IntCode:
-    def __init__(self, values, input_list=None, input_func=None, extend=False, interrupt=False, auto=False):
+    def __init__(self, values, input_list=None, input_func=None, extend=False, interrupt=False, auto=False, x=5000000):
         if input_list is None:
             input_list = []
 
@@ -11,12 +11,13 @@ class IntCode:
         self.interrupt = interrupt
         self.address = 0
         self.done = False
+        self._extension = x
         self._debug = False
         self._debug_out = sys.stdout
         self._init(input_list, input_func)
 
         if extend:
-            self.codes.extend(repeat(0, 50000000))
+            self.codes.extend(repeat(0, self._extension))
 
         self.backup = self.codes.copy()
 
