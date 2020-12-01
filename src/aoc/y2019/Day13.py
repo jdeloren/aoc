@@ -1,5 +1,7 @@
-from aoc import DataAnalyzer
-from . import Computer
+#!/usr/bin/python
+from src.aoc.common import DataAnalyzer
+from src.aoc.y2019 import Computer
+import sys
 
 
 def play(values, debug=False):
@@ -53,3 +55,7 @@ def solve(puzzle):
     else:
         first()
         second()
+
+
+if __name__ == '__main__':
+    solve(sys.argv[1])

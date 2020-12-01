@@ -1,47 +1,77 @@
 #!/usr/bin/python
 from src.aoc.common import DataAnalyzer
-from src.aoc.y2019 import Computer
 import sys
 
 
+def cut(deck: list, point: int):
+    print(f"CUT {point}")
+    return deck[point:] + deck[:point]
+
+
+def deal(deck: list, inc: int):
+    print(f"DEAL {inc}")
+    table = [None] * len(deck)
+    i, j = 0, 0
+    while None in table:
+        # print(f"DEAL INTO {i} {len(table)} {j} {len(deck)}")
+        if table[i] is not None:
+            print(f"TABLE SPOT TAKEN?? {j} of {len(deck)}")
+            exit(1)
+        table[i] = deck[j]
+        i = (i + inc) % len(table)
+        j += 1
+    return table
+
+
+def stack(deck: list):
+    print(f"STACK")
+    return list(reversed(deck))
+
+
+def run_instructions(values: list, deck: list):
+    print("INSTRUCTION SET")
+    for value in values:
+        if value.endswith('stack'):
+            deck = stack(deck)
+        elif value.startswith('deal'):
+            deck = deal(deck, int(value.split(' ')[-1]))
+        elif value.startswith('cut'):
+            deck = cut(deck, int(value.split(' ')[-1]))
+
+    return deck
+
+
+def repeat_instructions(values: list, count: int = 101741582076661):
+    # deck = [x for x in range(119315717514047 // 1000000003)]
+    shoe = list()
+
+    deck = [x for x in range(119315)]
+    positions = []
+
+    print("STARTING LOOP")
+    for i in range(count):
+        out = run_instructions(values, deck)
+        if out in positions:
+            print(f"REPEATED ORDER AT: {len(positions)}")
+        if len(positions) % 10 == 0:
+            print(f"SETS DONE: {len(positions)}")
+
+        positions.append(out.copy())
+        deck = out
+
+    return deck
+
+
 def second():
-    def detection(x, y):
-        if x > n and y > n:
-            return True if radar[x-n][y-n:y].count(1) == n and [m[y-n] for m in radar[x-n:x]].count(1) == n else False
-        else:
-            return False
-
-    values = DataAnalyzer.int_csv("2019day19.txt")[0]
-    cpu = Computer.IntCode(values, extend=True, interrupt=False, auto=False, x=25000)
-    done, i, j, size, n = False, 0, 0, 1700, 100
-    radar = [[0 for i in range(size)] for j in range(size)]
-
-    for i in range(size):
-        for j in range(size):
-            cpu.reset([i, j])
-            cpu.start()
-            radar[i][j] = cpu.output()[0]
-            done = detection(i+1, j+1)
-            if done:
-                break
-
-        if done:
-            break
-
-    print(f"(19.2) LOCATED: {done}, {n}x{n} block at {i-n+1},{j-n+1} :: ship math = {(i-n+1)*10000 + j-n+1}")
+    values = [i.strip() for i in DataAnalyzer.load("2019day22.txt")]
+    deck = repeat_instructions(values)
+    print(f"(22.1) Position of cards 2019 is {deck.index(2020)}")
 
 
 def first():
-    values = DataAnalyzer.int_csv("2019day19.txt")[0]
-    count = 0
-    cpu = Computer.IntCode(values, extend=True, interrupt=False, auto=False)
-
-    for i in range(50):
-        for j in range(50):
-            cpu.reset([i, j])
-            cpu.start()
-            count += 1 if cpu.output()[0] == 1 else 0
-    print(f"(19.1) affected points: {count}")
+    values = [i.strip() for i in DataAnalyzer.load("2019day22.txt")]
+    deck = run_instructions(values, [x for x in range(10007)])
+    print(f"(22.1) Position of cards 2019 is {deck.index(2019)}")
 
 
 def solve(puzzle):

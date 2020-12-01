@@ -1,5 +1,5 @@
 import math
-from aoc import DataAnalyzer
+from src.aoc.common import DataAnalyzer
 
 
 def calc(num):
