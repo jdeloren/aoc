@@ -3,26 +3,26 @@ from src.aoc.common import DataAnalyzer
 
 
 def calc3(data, result=2020):
-    max = len(data)
-    for i in range(0, max-1): 
-            s = set() 
-            sum = result - data[i] 
-            for j in range(i + 1, max):
-                if (sum - data[j]) in s: 
-                    return i, j, data.index(sum - data[j])
-                s.add(data[j])
+    length = len(data)
+    for i in range(0, length-1):
+        s = set()
+        total = result - data[i]
+        for j in range(i + 1, length):
+            if (total - data[j]) in s:
+                return i, j, data.index(total - data[j])
+            s.add(data[j])
     
-    return -1,-1,-1
+    return -1, -1, -1
 
 
 def calc2(data, result=2020):
-    max = len(data)
-    for i in range(max):
-        for j in range(i, max):
+    length = len(data)
+    for i in range(length):
+        for j in range(i, length):
             if i != j and data[i] + data[j] == result:
-                return i,j
+                return i, j
     
-    return -1,-1
+    return -1, -1
 
 
 def second():
@@ -45,6 +45,7 @@ def solve(puzzle):
     else:
         first()
         second()
+
 
 if __name__ == '__main__':
     solve(sys.argv[1])
