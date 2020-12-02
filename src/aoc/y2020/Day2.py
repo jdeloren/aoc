@@ -4,7 +4,6 @@ from src.aoc.common import DataAnalyzer
 def passwd(data):
     for str in data:
         words = str.split()
-    
         bounds = words[0].split('-')
         yield [int(bounds[0]), int(bounds[1]), words[1][0], words[2]]
 
@@ -54,7 +53,7 @@ def first():
     print("(2.1.0) test valid passwords is {:d}".format(bound_check(data)))
 
     data = DataAnalyzer.load("2020day2.txt")
-    print("(2.2) valid passwords is {:}".format(bound_check(data)))
+    print("(2.1) valid passwords is {:}".format(bound_check(data)))
 
 
 def solve(puzzle):
